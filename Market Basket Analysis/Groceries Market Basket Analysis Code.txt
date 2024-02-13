@@ -1,0 +1,57 @@
+data = pd.read_csv('../input/groceries-dataset/Groceries_dataset.csv')
+data.head()
+
+# To check the data types of the columns, I use info() function. According to result below, Member_number and Date columns are not in correct datatype.
+#For the following steps, I will change them into correct form.
+data.info()
+
+# Renaming the columns, because it would be easier to understand what that means.
+data.columns = ['memberID', 'Date', 'itemName']
+data.head()
+
+# Checking for the missing values
+nan_values = data.isna().sum()
+nan_values
+
+# Converting Date column into correct datatype which is datetime
+data.Date = pd.to_datetime(data.Date)
+data.memberID = data['memberID'].astype('str')
+data.info()  # They are in correct datatype now
+
+#Data Visualization
+#Number of Sales Weekly
+
+Sales_weekly = data.resample('w', on='Date').size()
+fig = px.line(data, x=Sales_weekly.index, y=Sales_weekly,
+              labels={'y': 'Number of Sales',
+                     'x': 'Date'})
+fig.update_layout(title_text='Number of Sales Weekly',
+                  title_x=0.5, title_font=dict(size=18)) 
+fig.show()
+
+#Number of Customers Weekly
+
+Unique_customer_weekly = data.resample('w', on='Date').memberID.nunique()
+fig = px.line(Unique_customer_weekly, x=Unique_customer_weekly.index, y=Unique_customer_weekly,
+              labels={'y': 'Number of Customers'})
+fig.update_layout(title_text='Number of Customers Weekly',
+                  title_x=0.5, title_font=dict(size=18))
+fig.show()
+
+#Sales per Customer Weekly
+Sales_per_Customer = Sales_weekly / Unique_customer_weekly
+fig = px.line(Sales_per_Customer, x=Sales_per_Customer.index, y=Sales_per_Customer,
+              labels={'y': 'Sales per Customer Ratio'})
+fig.update_layout(title_text='Sales per Customer Weekly',
+                  title_x=0.5, title_font=dict(size=18))
+fig.update_yaxes(rangemode="tozero")
+fig.show()
+
+#Frequency of the Items Sold
+Frequency_of_items = data.groupby(pd.Grouper(key='itemName')).size().reset_index(name='count')
+fig = px.treemap(Frequency_of_items, path=['itemName'], values='count')
+fig.update_layout(title_text='Frequency of the Items Sold',
+                  title_x=0.5, title_font=dict(size=18)
+                  )
+fig.update_traces(textinfo="label+value")
+fig.show()
